@@ -1,0 +1,7 @@
+ldr_value
+laserState
+buttonPressed
+tiempo_inicio
+tiempo_medido
+flag_deteccion_activa
+flag_timesup

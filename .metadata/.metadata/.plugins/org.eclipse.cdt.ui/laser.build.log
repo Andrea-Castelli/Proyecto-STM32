@@ -1,0 +1,10 @@
+10:47:32 **** Incremental Build of configuration Debug for project laser ****
+make -j8 all 
+arm-none-eabi-size  laser.elf 
+   text	   data	    bss	    dec	    hex	filename
+  10520	     24	   1736	  12280	   2ff8	laser.elf
+Finished building: default.size.stdout
+ 
+
+10:47:32 Build Finished. 0 errors, 0 warnings. (took 371ms)
+

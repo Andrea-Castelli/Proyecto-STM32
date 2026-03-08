@@ -60,8 +60,8 @@ all: main-build
 main-build: laser.elf secondary-outputs
 
 # Tool invocations
-laser.elf laser.map: $(OBJS) $(USER_OBJS) C:\Users\Usuario\Downloads\2025_2026\sed\trabajo_stm32\laser\STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "laser.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Usuario\Downloads\2025_2026\sed\trabajo_stm32\laser\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="laser.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+laser.elf laser.map: $(OBJS) $(USER_OBJS) C:\Users\Usuario\Downloads\2025_2026\sed\trabajo_stm32\Proyecto-STM32\laser\STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "laser.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Usuario\Downloads\2025_2026\sed\trabajo_stm32\Proyecto-STM32\laser\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="laser.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

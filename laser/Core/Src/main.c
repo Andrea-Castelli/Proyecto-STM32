@@ -32,6 +32,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+#define TIMESUP_MS 5000 //5s para las pruebas luego habria que aumentarlo
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,25 +44,37 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
-/* USER CODE BEGIN PV */
-int ldr_value; // To store the LDR reading
-int threshold = 2000; // Adjust this value based on your testing
+TIM_HandleTypeDef htim2;
 
-uint8_t laserState = 0;        // Estado actual del láser (0=apagado, 1=encendido)
-uint8_t lastButtonState = 1;   // Estado anterior del botón (asumiendo pull-up)
-uint8_t buttonPressed = 0;     // Flag para detectar si el botón fue presionado
+/* USER CODE BEGIN PV */
+int ldr_value;
+int threshold_alto = 2000; //ajustar
+int threshold_bajo=500;
+
+uint8_t laserState = 0;
+uint8_t lastButtonState = 1;	//asumo pull-up
+uint8_t buttonPressed = 0;
+
+volatile uint32_t tiempo_inicio = 0;
+volatile uint8_t flag_deteccion_activa = 0;
+volatile uint32_t tiempo_medido = 0;
+volatile uint8_t flag_timesup = 0;           // 1 cuando se acabe el tiempo
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+
 
 /* USER CODE END 0 */
 
@@ -94,11 +108,22 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_ADC1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET); // Turn laser on
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+  laserState=0;
+  lastButtonState=1;
+  buttonPressed=0;
 
-  // Iniciar conversión ADC continua
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+
   HAL_ADC_Start(&hadc1);
+  flag_deteccion_activa = 1;
+  tiempo_inicio = HAL_GetTick();
+  flag_timesup = 0;
+  tiempo_medido = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -109,62 +134,92 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  //leer valor de pin c13
-	  uint8_t currentButtonState = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+	  //leer valor de boton usuario
+	  uint8_t currentButtonState = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
 
 	  if (lastButtonState == 1 && currentButtonState == 0)
 	    {
 	      HAL_Delay(50);//debounce
-	      currentButtonState = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
 
+	      currentButtonState=HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
 	         if (currentButtonState == 0)
 	         {
 	           buttonPressed = 1;
 	         }
 	       }
-	  if (buttonPressed && currentButtonState == 1)
+	  if (buttonPressed==1 && currentButtonState == 1)
 	    {
-	      // Cambiar el estado del láser
+
 	      laserState = !laserState;
 
-	      // Actualizar el láser (usa el puerto y pin correctos, ej: PA5)
-	      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, laserState ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	      if(laserState){
+	    	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	    	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+	      }
+	      else{
+	    	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	    	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+	      }
 
-	      // Resetear flag
 	      buttonPressed = 0;
 
-	      // Pequeña pausa anti-rebote
 	      HAL_Delay(200);
 	    }
 
-	    // Actualizar estado anterior del botón
 	    lastButtonState = currentButtonState;
-
 	    HAL_Delay(10);
 
 
-	  // Leer valor del LDR en PA0
+	    //temporizador
+
 	      if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK)
 	      {
 	        ldr_value = HAL_ADC_GetValue(&hadc1);
 
-	        // Si el láser está interrumpido (valor bajo)
-	        if (ldr_value < threshold)
+	        if(ldr_value >threshold_alto && flag_deteccion_activa)
 	        {
-	          // ALARMA: Láser interrumpido
-	          // Puedes encender un LED, activar buzzer, etc.
-	          HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET); // Apagar láser momentáneamente
-	          HAL_Delay(100);
-	          HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);   // Reencender láser
+	        	tiempo_medido = HAL_GetTick() - tiempo_inicio;
+	        	flag_deteccion_activa = 0; // parar medicion
+
+	        	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+	        	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
 	        }
 
-	        // Pequeña pausa entre lecturas
+	        if (ldr_value < threshold_bajo &&laserState)
+	        {
+	        	for(int i = 0; i < 4; i++) {
+	        		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+	        		HAL_Delay(80);
+	        	}
+	        	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+	        	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	        }
+
+
 	        HAL_Delay(50);
 	      }
 
 
 
+	      if (flag_deteccion_activa) {
+	              if ((HAL_GetTick() - tiempo_inicio) > TIMESUP_MS) {
+	                  flag_timesup = 1;
+	                  flag_deteccion_activa = 0;
+
+	                  for(int i = 0; i < 5; i++) {
+	                      HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+	                      HAL_Delay(100);
+	                  }
+	                  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+	              }
+	          }
+
+
+	      //añadir reinicio?
+
   }
+
   /* USER CODE END 3 */
 }
 
@@ -253,7 +308,7 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -263,6 +318,51 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 4294967295;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -281,9 +381,13 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
@@ -291,12 +395,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA1 PA5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_5;
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PD12 PD13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
