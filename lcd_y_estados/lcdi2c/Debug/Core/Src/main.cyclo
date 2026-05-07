@@ -1,0 +1,15 @@
+../Core/Src/main.c:84:6:lcd_send_cmd	1
+../Core/Src/main.c:103:6:lcd_send_data	1
+../Core/Src/main.c:116:6:lcd_init	1
+../Core/Src/main.c:141:6:lcd_send_string	2
+../Core/Src/main.c:146:6:lcd_put_cur	3
+../Core/Src/main.c:160:6:lcd_clear	1
+../Core/Src/main.c:168:6:HAL_GPIO_EXTI_Callback	3
+../Core/Src/main.c:180:6:Cambio_de_Estados	6
+../Core/Src/main.c:202:6:Acciones_Estados	15
+../Core/Src/main.c:361:5:main	3
+../Core/Src/main.c:420:6:SystemClock_Config	3
+../Core/Src/main.c:467:13:MX_I2C1_Init	2
+../Core/Src/main.c:501:13:MX_USART2_UART_Init	2
+../Core/Src/main.c:534:13:MX_GPIO_Init	1
+../Core/Src/main.c:580:6:Error_Handler	1
