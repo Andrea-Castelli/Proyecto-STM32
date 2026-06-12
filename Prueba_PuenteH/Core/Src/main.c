@@ -97,21 +97,35 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // Giro horario
-	      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
-	      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
-	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 900); // 90% de potencia
-	      HAL_Delay(3000);
+	  // === 1. VELOCIDAD ALTA (Aproximadamente 50%) ===
+	 // HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);   // IN1 = 1 (Fijo)
+	  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET); // IN2 = 0 (Fijo)
+	  //__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 600);     // Muy rápido
+	  //HAL_Delay(3000);
 
-	      // Paro
-	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-	      HAL_Delay(1000);
+	  // === 2. PARO ===
+	  //__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);       // Frenamos 1 segundo
+	  //HAL_Delay(1000);
 
-	      // Giro anti-horario
-	      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-	      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
-	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 900);
-	      HAL_Delay(3000);
+	  // === 3. VELOCIDAD MEDIA (Exactamente 30%) ===
+	  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);   // IN1 = 1 (Mantenemos dirección)
+	  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET); // IN2 = 0 (Mantenemos dirección)
+	  //__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 300);     // Velocidad media
+	  //HAL_Delay(3000);
+
+	  // === 4. PARO ===
+	  //__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);       // Frenamos otra vez
+	  //HAL_Delay(1000);
+
+	  // === 5. VELOCIDAD BAJA (Aproximadamente 10%) ===
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);   // IN1 = 1 (Mantenemos dirección)
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET); // IN2 = 0 (Mantenemos dirección)
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 400);     // Si pones 100 (10%) probablemente no se mueva
+	  HAL_Delay(3000);
+
+	  // === 6. PARO FINAL ===
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+	  HAL_Delay(2000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
