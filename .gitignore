@@ -60,3 +60,4 @@ Release/
 .cache/
 *.launch
 .metadata/
+.mxproject
