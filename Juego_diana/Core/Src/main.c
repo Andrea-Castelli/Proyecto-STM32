@@ -24,6 +24,7 @@
 #include "i2c_lcd.h"
 #include <stdio.h>
 #include <string.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -308,19 +309,27 @@ void Acciones_Estados(){
 		        			 paso_cuenta = 1;
 		        			 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, SET);   // IN1
 		        			 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, RESET); // IN2
+		        			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, RESET);
 		        			 if(nivel == 0){
 		        			 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+		        			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
 		        			 }
 		        			 if(nivel == 1){
 		        			 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 300);
+		        			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
+		        			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, SET);
 		        			 }
 		        			 if(nivel == 2){
 			        	     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 800);
+			        	     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
+			        	     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, SET);
+			        	   	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, SET);
 		        			 }
 		        		 }
 		        		 else if (paso_cuenta == 1) {
 		        			 lcd_clear();
 		        			 paso_cuenta = 0;
+
 		        			 //cambiar luego
 		        			 Cambio_de_Estados(Ninguno);
 		        		 }
@@ -371,6 +380,11 @@ void Acciones_Estados(){
 		        		  nivel=0; //que se reinicie cuando falles que si no es muy facil
 		        		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, RESET);
 		        		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, RESET);
+
+		        		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, SET);
+		        		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET);
+		        		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, RESET);
+		        		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, RESET);
 		        		  Cambio_de_Estados(Ninguno);
 		        	  }
 
@@ -424,6 +438,12 @@ void Reset_S1(){
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, RESET);
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, RESET);
+
+	// Apagar todos los LEDs
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET); // Verde 1
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, RESET); // Verde 2
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, RESET); // Verde 3
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, RESET); // Rojo
 }
 
 
@@ -876,11 +896,14 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, Salida_H_Pin|Salida_HD13_Pin, GPIO_PIN_RESET);
@@ -909,6 +932,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB12 PB13 PB14 PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Salida_H_Pin Salida_HD13_Pin */
   GPIO_InitStruct.Pin = Salida_H_Pin|Salida_HD13_Pin;
