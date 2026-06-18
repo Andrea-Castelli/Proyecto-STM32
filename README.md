@@ -1,2 +1,2 @@
 # Proyecto-STM32
-En este repositorio se desarrolla un juego de __ con la placa Discovery. *explicar
+En este repositorio se desarrolla un juego de puntería con la placa Discovery. El proyecto consiste en una diana móvil equipada con un sensor LDR, que permite a la placa saber si se “acierta” o se “falla” en cada turno. En cuanto al manejo del láser, el usuario no tendrá contacto directo con este, sino que se servirá de un joystick que controlará el sentido y velocidad del láser, así como su encendido y apagado. Podrán jugar tanto uno como varios jugadores, compitiendo por obtener el “Récord” de tiempos. 
