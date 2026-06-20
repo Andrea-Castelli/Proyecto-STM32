@@ -233,6 +233,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		        	last_tick_externo = HAL_GetTick();
 		        }
 		}
+
+	if (GPIO_Pin == GPIO_PIN_10) {
+		if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_10) == GPIO_PIN_RESET) {
+		            HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);   // Láser ON
+		        } else {
+		            HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET); // Láser OFF
+		        }
+	}
 }
 
 
@@ -527,15 +535,10 @@ int main(void)
 
 	  valor_ldr = valor_adc[0];      // Rank 1: LDR (Diana)
 	  valor_joystick = valor_adc[1]; // Rank 2: Joystick
-	  printf("LDR: %lu | Joystick: %lu\r\n", valor_ldr, valor_joystick);
+	  //printf("LDR: %lu | Joystick: %lu\r\n", valor_ldr, valor_joystick);
 	  uint32_t pwm_servo = 500 + ((valor_joystick * 2000) / 4095);
 	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pwm_servo);
 
-	  if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_10) == GPIO_PIN_RESET) {
-	            HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);   // ¡Láser ON!
-	        } else {
-	            HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET); // Láser OFF
-	        }
 
 	  if (estado_actual != estado_anterior) {
 	      lcd_clear();//para limpiar la pantalla
@@ -922,7 +925,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PE10 */
   GPIO_InitStruct.Pin = GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
@@ -953,6 +956,9 @@ static void MX_GPIO_Init(void)
 
   HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
